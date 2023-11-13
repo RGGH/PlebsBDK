@@ -54,7 +54,7 @@ struct User {
     name: Option<String>,
 }
 
-// GET /?name=Foo
+// curl http://127.0.0.1:3000/query\?name\=foo
 async fn user(user: Query<User>) -> Cow<'static, str> {
     match &user.name {
         Some(user) => format!("Hello, {}!", user).into(),
@@ -88,8 +88,9 @@ async fn main() {
     
 
     let app = Router::new()
-        .route("/", get(user)) // Route for the root path
-        .route("/test", get(response));
+        .route("/:query", get(user)) // Route for the root path
+        .route("/test", get(hello))
+        .route("/", get(response)); // Route for the root path
 
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
