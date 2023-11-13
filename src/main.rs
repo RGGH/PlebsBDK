@@ -23,15 +23,14 @@ use dotenv::from_filename;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
-use std::borrow::Cow;
 use std::env;
 use std::net::SocketAddr;
 use std::path::Path;
 
 //#[derive(serde::Serialize)]
 //struct AddressResponse {
-    //address: String,
-    //index: u32,
+//address: String,
+//index: u32,
 //}
 
 // 1
@@ -54,11 +53,11 @@ struct User {
     name: Option<String>,
 }
 
-// curl http://127.0.0.1:3000/query\?name\=foo
-async fn user(user: Query<User>) -> Cow<'static, str> {
+
+async fn user(user: Query<User>) -> Html<String> {
     match &user.name {
-        Some(user) => format!("Hello, {}!", user).into(),
-        None => "Hello, World!".into(),
+        Some(username) => Html(format!("Hello, {}!", username)),
+        None => Html("Hello, World!".to_string()),
     }
 }
 
@@ -78,17 +77,16 @@ async fn main() {
     );
 
     let balance = &wallet.expect("REASON").get_balance().unwrap();
-
+    println!("{:?}", balance);
     //let address = &wallet
-    //.expect("stuff")
     //.get_address(wallet::AddressIndex::New);
 
     // AXUM STUFF ----------------------------------------------------------------
 
     let app = Router::new()
-        .route("/:query", get(user)) // Route for the root path
+        .route("/:query", get(user))
         .route("/test", get(test))
-        .route("/", get(response)); // Route for the root path
+        .route("/", get(response));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
