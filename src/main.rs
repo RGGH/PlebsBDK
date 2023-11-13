@@ -4,19 +4,14 @@
 use axum::response::Html;
 
 use axum::{
+    body::{Bytes, Full},
+    extract::Query,
     http::StatusCode,
+    response::Response,
+    response::{IntoResponse, Json as JsonResponse},
     routing::{get, post},
     Error, Json, Router,
-    response::Response,
-    body::{Full, Bytes},
-    response::{IntoResponse, Json as JsonResponse},
-    extract::Query
 };
-use std::borrow::Cow;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::net::SocketAddr;
-use serde_json::json;
 use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
@@ -25,20 +20,24 @@ use bdk::electrum_client::Client;
 use bdk::{descriptor, wallet};
 use bdk::{SyncOptions, Wallet};
 use dotenv::from_filename;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::Value;
+use std::borrow::Cow;
 use std::env;
+use std::net::SocketAddr;
 use std::path::Path;
 
-#[derive(serde::Serialize)]
-struct AddressResponse {
-    address: String,
-    index: u32,
+//#[derive(serde::Serialize)]
+//struct AddressResponse {
+    //address: String,
+    //index: u32,
+//}
+
+// 1
+async fn test() -> impl IntoResponse {
+    Html("<h1>Hello, this is your Axum web server!</h1>")
 }
-
-
-
-async fn hello() -> impl IntoResponse {
-        Html("<h1>Hello, this is your Axum web server!</h1>")
-    }
 
 // 2
 async fn response() -> Response<Full<Bytes>> {
@@ -49,6 +48,7 @@ async fn response() -> Response<Full<Bytes>> {
         .unwrap()
 }
 
+// 3
 #[derive(Deserialize)]
 struct User {
     name: Option<String>,
@@ -58,9 +58,8 @@ struct User {
 async fn user(user: Query<User>) -> Cow<'static, str> {
     match &user.name {
         Some(user) => format!("Hello, {}!", user).into(),
-        None => "Hello, World!".into()
+        None => "Hello, World!".into(),
     }
-    
 }
 
 #[tokio::main]
@@ -85,13 +84,11 @@ async fn main() {
     //.get_address(wallet::AddressIndex::New);
 
     // AXUM STUFF ----------------------------------------------------------------
-    
 
     let app = Router::new()
         .route("/:query", get(user)) // Route for the root path
-        .route("/test", get(hello))
+        .route("/test", get(test))
         .route("/", get(response)); // Route for the root path
-
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
