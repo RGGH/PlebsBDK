@@ -1,8 +1,6 @@
-// test❯ curl http://127.0.0.1:3000/\?name\=foo
-
 #![allow(unused)]
-use axum::response::Html;
 
+use axum::response::Html;
 use axum::{
     body::{Bytes, Full},
     extract::Query,
@@ -12,33 +10,26 @@ use axum::{
     routing::{get, post},
     Error, Json, Router,
 };
-use bdk::bitcoin::{Address, Network};
+use bdk::bitcoin::Network;
 use bdk::blockchain::ElectrumBlockchain;
-use bdk::database::MemoryDatabase;
 use bdk::database::SqliteDatabase;
 use bdk::electrum_client::Client;
-use bdk::{descriptor, wallet};
 use bdk::{SyncOptions, Wallet};
 use dotenv::from_filename;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use serde_json::Value;
 use std::env;
 use std::net::SocketAddr;
 use std::path::Path;
 
-//#[derive(serde::Serialize)]
-//struct AddressResponse {
-//address: String,
-//index: u32,
-//}
+#[derive(Deserialize)]
+struct User {
+    name: Option<String>,
+}
 
-// 1
 async fn test() -> impl IntoResponse {
     Html("<h1>Hello, this is your Axum web server!</h1>")
 }
 
-// 2
 async fn response() -> Response<Full<Bytes>> {
     Response::builder()
         .status(StatusCode::NOT_FOUND)
@@ -47,22 +38,8 @@ async fn response() -> Response<Full<Bytes>> {
         .unwrap()
 }
 
-// 3
-#[derive(Deserialize)]
-struct User {
-    name: Option<String>,
-}
-
-
-async fn user(user: Query<User>) -> Html<String> {
-    match &user.name {
-        Some(username) => Html(format!("Hello, {}!", username)),
-        None => Html("Hello, World!".to_string()),
-    }
-}
-
-#[tokio::main]
-async fn main() {
+async fn get_balance() -> Html<String> {
+    // Retrieve wallet balance logic here
     from_filename(".env").ok();
     let client = Client::new("ssl://electrum.blockstream.info:60002").unwrap();
     let blockchain = ElectrumBlockchain::from(client);
@@ -76,15 +53,17 @@ async fn main() {
         SqliteDatabase::new(my_path),
     );
 
-    let balance = &wallet.expect("REASON").get_balance().unwrap();
-    println!("{:?}", balance);
-    //let address = &wallet
-    //.get_address(wallet::AddressIndex::New);
+    let balance = wallet.expect("REASON").get_balance().unwrap();
+    Html(format!(
+        "<h1 style=\"color: green; font-weight: bold;\">Wallet Balance: {:?}</h1>",
+        balance.confirmed
+    ))
+}
 
-    // AXUM STUFF ----------------------------------------------------------------
-
+#[tokio::main]
+async fn main() {
     let app = Router::new()
-        .route("/:query", get(user))
+        .route("/balance", get(get_balance))
         .route("/test", get(test))
         .route("/", get(response));
 
